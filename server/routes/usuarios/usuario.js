@@ -3,6 +3,43 @@ const app = express.Router();
 let arrJsnUsuarios = [{ _id: 1, strNombre: 'Jorge', strApellido: 'Montemayor', strEmail: 'jmontemayor@sigma-alimentos.com' }]
 // const path = require('path');
 // const rutaDescarga = path.resolve(__dirname, '../../assets/index.html');
+
+app.get('/obtenerUsuario',(req,res) =>{
+
+    const idUsuario = parseInt(req.query.idUsuario);
+
+    if(!idUsuario){
+        return res.status(400).json({
+            ok:false,
+            msg: 'No se recibio un identificador de usuario',
+            cont: {
+                idUsuario
+            }
+        })
+    }
+        const obtenerUsuario = arrJsnUsuarios.find(usuario => usuario._id == idUsuario);
+        if(!obtenerUsuario){
+            return res.status(400).json({
+                ok:false,
+                msg: 'El usuario no se encuentra registrado ',
+                cont:{
+                    idUsuario
+                }
+            })
+        }
+        
+        return res.status(200).json({
+            ok: true,
+            msg: 'Se recibio el usuario de manera exitosa',
+            cont: {
+                obtenerUsuario
+            }
+        })
+    
+
+})
+
+
 app.get('/', (req, res) => {
     const arrUsuarios = arrJsnUsuarios;
     return res.status(200).json({
