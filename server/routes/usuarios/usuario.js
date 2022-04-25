@@ -1,181 +1,88 @@
 const express = require('express');
 const app = express.Router();
-let arrJsnUsuarios = [{ _id: 1, strNombre: 'Jorge', strApellido: 'Montemayor', strEmail: 'jmontemayor@sigma-alimentos.com' }]
-// const path = require('path');
-// const rutaDescarga = path.resolve(__dirname, '../../assets/index.html');
+const UsuarioModel = require('../../models/usuario/usuario.model');
+const bcrypt = require('bcrypt');
 
-app.get('/obtenerUsuario',(req,res) =>{
+app.get('/', (req,res) => {
 
-    const idUsuario = parseInt(req.query.idUsuario);
-
-    if(!idUsuario){
-        return res.status(400).json({
-            ok:false,
-            msg: 'No se recibio un identificador de usuario',
-            cont: {
-                idUsuario
-            }
-        })
-    }
-        const obtenerUsuario = arrJsnUsuarios.find(usuario => usuario._id == idUsuario);
-        if(!obtenerUsuario){
-            return res.status(400).json({
-                ok:false,
-                msg: 'El usuario no se encuentra registrado ',
-                cont:{
-                    idUsuario
-                }
-            })
-        }
-        
-        return res.status(200).json({
-            ok: true,
-            msg: 'Se recibio el usuario de manera exitosa',
-            cont: {
-                obtenerUsuario
-            }
-        })
+    const obtenerusuarios = await UsuarioModel.find({},{strContrasena:0});
     
 
-})
+    if(!obtenerusuarios.length>0) 
+    {
+        return res.status(400).json({
+            ok: false,
+            msg:'No hay usuarios en la base de datos',
+            cont:
+            {
+                obtenerusuarios
+            }
+        })
+    }
 
-
-app.get('/', (req, res) => {
-    const arrUsuarios = arrJsnUsuarios;
     return res.status(200).json({
         ok: true,
-        msg: 'Se recibierón los usuarios de manera exitosa',
-        cont: {
-            arrUsuarios
+        msg:'Si hay usuarios en la base de datos',
+        count: obtenerusuarios.length,
+        cont:
+        {
+            obtenerusuarios
         }
     })
-    // return res.download(rutaDescarga, 'index.html');
-})
+});
 
-app.post('/', (req, res) => {
+app.post('/', (req,res) =>
+{
+    const body ={ ...req.body, strContrasena: req.body.strContrasena ? bcrypt.hashSync(req.body.strContrasena,10) : undefined };
+    const bodyUsuario = new UsuarioModel(body);
 
-    const body = {
-        strNombre: req.body.strNombre,
-        strApellido: req.body.strApellido,
-        strEmail: req.body.strEmail,
-        _id: Number(req.body._id)
-    }
-    if (body.strNombre && body.strApellido && body.strEmail && body._id) {
+    const obtenermail = UsuarioModel.find({strEmail:body.strEmail});
+    const obtenerNombreUsuarios = await UsuarioModel.find({strNombreUsuario:body.strNombreUsuario});
 
-        const encontroUsuario = arrJsnUsuarios.find(usuario => usuario._id == body._id)
-
-        if (encontroUsuario) {
-            res.status(400).json({
-                ok: false,
-                msg: 'El usuario ya se encuentra registrado ',
-                cont: {
-                    encontroUsuario
-                }
-            })
-        } else {
-            arrJsnUsuarios.push(body)
-            res.status(200).json({
-                ok: true,
-                msg: 'Se registro el usuario de manera correcta',
-                cont: {
-                    arrJsnUsuarios
-                }
-            })
-        }
-
-    } else {
-        res.status(400).json({
-            ok: false,
-            msg: 'No se recibio alguno o todos los valores requeridos',
-            cont: {
+    if(obtenermail.length>0)
+    {
+        return res.status(400).json({
+            ok:false,
+            msg:('El email ya se encuentra registrado'),
+            cont:{
                 body
             }
         })
     }
 
-
-})
-
-app.put('/', (req,res) => {
-    const idUsuario = parseInt(req.query.idUsuario);
-    
-    if(idUsuario){
-        const encontroUsuario = arrJsnUsuarios.find( usuario => usuario._id === idUsuario );
-        if (encontroUsuario) {
-            const actualizarUsuario = {
-                _id: encontroUsuario._id, 
-                strNombre: req.body.strNombre,
-                strApellido: req.body.strApellido,
-                strEmail: req.body.strEmail
-            }
-            const filtrarUsuario = arrJsnUsuarios.filter(idfi => idfi._id != idUsuario);
-            arrJsnUsuarios = filtrarUsuario;
-            arrJsnUsuarios.push(actualizarUsuario);
-
-            return res.status(200).json({
-                ok: true,
-                msg: `El usuario con el id ${idUsuario} se actualizó de manera exitosa.`,
-                cont: {
-                    actualizarUsuario
-                }
-            });
-            
-        }else{
-            return res.status(400).json({
-                ok: false,
-                msg: `El usuario con el id ${idUsuario} no se encuentra registrado en la base de datos.`,
-                cont: {
-                    idUsuario
-                }
-            });
-        }
-
-    }else{
+    if(obtenerNombreUsuarios.length>0)
+    {
         return res.status(400).json({
-            ok: false,
-            msg: 'No ingresó el Identificador',
-            cont: {
-                idUsuario
-            }
-        });
-    }
-});
-
-app.delete('/',(req,res)=>{
-    const idUsuario = parseInt( req.query.idUsuario);
-
-    if(!idUsuario){
-         return res.status(400).json({
             ok:false,
-            msg:'No se recibio un identificador del usuario',
+            msg:('El nombre ya se encuentra registrado'),
             cont:{
-                idUsuario
+                body
             }
         })
     }
-    const encontroUsuario = arrJsnUsuarios.find(usuario => usuario._id == idUsuario);
-    if(!encontroUsuario){
+
+    const err = bodyUsuario.validateSync();
+
+    if (err) 
+    {
         return res.status(400).json({
             ok:false,
-            msg:`No se encontro un usuario con el id: ${idUsuario} en la base de datos`,
+            msg:('Falta uno o mas datos del usuario. Favor de completarlos'),
             cont:{
-                idUsuario
+                err
             }
         })
     }
-    const usuariofiltrado = arrJsnUsuarios.filter(usuario => usuario._id != idUsuario);
-    arrJsnUsuarios=usuariofiltrado;
-    
+    const usuarioRegistrado = bodyUsuario.save();
+
     return res.status(200).json({
         ok:true,
-        msg:'Se elimino el usuario de manera exitosa',
+        msg:('El usuario se registro correctamente'),
         cont:{
-            encontroUsuario
+            usuarioRegistrado
         }
     })
+
 })
-
-
-
 
 module.exports = app;
