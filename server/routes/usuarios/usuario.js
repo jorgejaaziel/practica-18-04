@@ -211,7 +211,7 @@ app.put('/', async(req,res)=> {
 app.delete('/', async (req,res)=> {
     try {
     const _idUsuario = req.query._idUsuario
-    const blnEstado = req.body.blnEstado == "false" ? false : true
+    const blnEstado = req.body.blnEstado == "false" ? false : true ;
 
     if(!_idUsuario || _idUsuario.length !=24 || !blnEstado) {
         return res.status(400).json({
@@ -224,6 +224,28 @@ app.delete('/', async (req,res)=> {
     }
 
     const modificarEstadoUsuario = await UsuarioModel.findOneAndUpdate({ _id: _idUsuario}, { $set: {blnEstado: blnEstado}}, {new: true})
+    if (!modificarEstado)
+            {
+                return res.status(400).json(
+                    {
+                        ok:false,
+                        msg: 'No se realizo ninguna actividad',
+                        cont:
+                        {
+                            ...req.query
+                        }
+                    }) 
+            }
+            return res.status(200).json(
+                {
+                    ok:true,
+                    msg: _blnEstado == true ? 'Se activo el usuario de manera existosa' : 'El usuario se desactivo de manera exitosa' ,
+                    cont:
+                    {
+                        modificarEstado
+                    }
+                })
+
 } catch(error) {
     return res.status(500).json(
         {
@@ -235,6 +257,15 @@ app.delete('/', async (req,res)=> {
             }
         })
 }
+ return res.status(200).json(
+            {
+                ok:true,
+                msg: _blnEstado == true ? 'Se activo el usuario de manera existosa' : 'El usuario se desactivo de manera exitosa' ,
+                cont:
+                {
+                    modificarEstado
+                }
+            })
 
     /*
    return res.status(200).json({
