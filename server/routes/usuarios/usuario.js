@@ -1,181 +1,251 @@
 const express = require('express');
 const app = express.Router();
-let arrJsnUsuarios = [{ _id: 1, strNombre: 'Jorge', strApellido: 'Montemayor', strEmail: 'jmontemayor@sigma-alimentos.com' }]
-// const path = require('path');
-// const rutaDescarga = path.resolve(__dirname, '../../assets/index.html');
+const UsuarioModel = require('../../models/usuario/usuario.model');
+const bcrypt = require('bcrypt');
 
-app.get('/obtenerUsuario',(req,res) =>{
+app.get('/', async (req,res) => {
+    try {
 
-    const idUsuario = parseInt(req.query.idUsuario);
-
-    if(!idUsuario){
-        return res.status(400).json({
-            ok:false,
-            msg: 'No se recibio un identificador de usuario',
-            cont: {
-                idUsuario
-            }
-        })
-    }
-        const obtenerUsuario = arrJsnUsuarios.find(usuario => usuario._id == idUsuario);
-        if(!obtenerUsuario){
-            return res.status(400).json({
-                ok:false,
-                msg: 'El usuario no se encuentra registrado ',
-                cont:{
-                    idUsuario
-                }
-            })
-        }
-        
-        return res.status(200).json({
-            ok: true,
-            msg: 'Se recibio el usuario de manera exitosa',
-            cont: {
-                obtenerUsuario
-            }
-        })
+    const obtenerUsuarios = await UsuarioModel.find({},{strContrasena:0});
     
 
-})
+    if(!obtenerUsuarios.length>0) 
+    {
+        return res.status(400).json({
+            ok: false,
+            msg:'No hay usuarios en la base de datos',
+            cont:
+            {
+                obtenerUsuarios
+            }
+        })
+    }
 
-
-app.get('/', (req, res) => {
-    const arrUsuarios = arrJsnUsuarios;
     return res.status(200).json({
         ok: true,
-        msg: 'Se recibierón los usuarios de manera exitosa',
-        cont: {
-            arrUsuarios
+        msg:'Si hay usuarios en la base de datos',
+        count: obtenerUsuarios.length,
+        cont:
+        {
+            obtenerUsuarios
         }
     })
-    // return res.download(rutaDescarga, 'index.html');
-})
+} catch (error) {
+    return res.status(500).json(
+        {
+            ok:false,
+            msg: 'Error en el servidor',
+            cont:
+            {
+                error
+            }
+        })
+}
 
-app.post('/', (req, res) => {
+    
+});
 
-    const body = {
-        strNombre: req.body.strNombre,
-        strApellido: req.body.strApellido,
-        strEmail: req.body.strEmail,
-        _id: Number(req.body._id)
-    }
-    if (body.strNombre && body.strApellido && body.strEmail && body._id) {
+app.post('/', async (req,res) =>
+{
+    try {
+    const body ={ ...req.body, strContrasena: req.body.strContrasena ? bcrypt.hashSync(req.body.strContrasena,10) : undefined };
+    const bodyUsuario = new UsuarioModel(body);
 
-        const encontroUsuario = arrJsnUsuarios.find(usuario => usuario._id == body._id)
+    const obtenermail = await UsuarioModel.findOne({strEmail:body.strEmail});
+    const obtenerNombreUsuarios = await UsuarioModel.findOne({strNombreUsuario:body.strNombreUsuario});
 
-        if (encontroUsuario) {
-            res.status(400).json({
-                ok: false,
-                msg: 'El usuario ya se encuentra registrado ',
-                cont: {
-                    encontroUsuario
-                }
-            })
-        } else {
-            arrJsnUsuarios.push(body)
-            res.status(200).json({
-                ok: true,
-                msg: 'Se registro el usuario de manera correcta',
-                cont: {
-                    arrJsnUsuarios
-                }
-            })
-        }
-
-    } else {
-        res.status(400).json({
-            ok: false,
-            msg: 'No se recibio alguno o todos los valores requeridos',
-            cont: {
+    if(obtenermail)
+    {
+        return res.status(400).json({
+            ok:false,
+            msg:('El email ya se encuentra registrado'),
+            cont:{
                 body
             }
         })
     }
 
-
-})
-
-app.put('/', (req,res) => {
-    const idUsuario = parseInt(req.query.idUsuario);
-    
-    if(idUsuario){
-        const encontroUsuario = arrJsnUsuarios.find( usuario => usuario._id === idUsuario );
-        if (encontroUsuario) {
-            const actualizarUsuario = {
-                _id: encontroUsuario._id, 
-                strNombre: req.body.strNombre,
-                strApellido: req.body.strApellido,
-                strEmail: req.body.strEmail
-            }
-            const filtrarUsuario = arrJsnUsuarios.filter(idfi => idfi._id != idUsuario);
-            arrJsnUsuarios = filtrarUsuario;
-            arrJsnUsuarios.push(actualizarUsuario);
-
-            return res.status(200).json({
-                ok: true,
-                msg: `El usuario con el id ${idUsuario} se actualizó de manera exitosa.`,
-                cont: {
-                    actualizarUsuario
-                }
-            });
-            
-        }else{
-            return res.status(400).json({
-                ok: false,
-                msg: `El usuario con el id ${idUsuario} no se encuentra registrado en la base de datos.`,
-                cont: {
-                    idUsuario
-                }
-            });
-        }
-
-    }else{
+    if(obtenerNombreUsuarios)
+    {
         return res.status(400).json({
-            ok: false,
-            msg: 'No ingresó el Identificador',
-            cont: {
-                idUsuario
-            }
-        });
-    }
-});
-
-app.delete('/',(req,res)=>{
-    const idUsuario = parseInt( req.query.idUsuario);
-
-    if(!idUsuario){
-         return res.status(400).json({
             ok:false,
-            msg:'No se recibio un identificador del usuario',
+            msg:('El nombre ya se encuentra registrado'),
             cont:{
-                idUsuario
+                body
             }
         })
     }
-    const encontroUsuario = arrJsnUsuarios.find(usuario => usuario._id == idUsuario);
-    if(!encontroUsuario){
+
+    const err = bodyUsuario.validateSync();
+
+    if (err) 
+    {
         return res.status(400).json({
             ok:false,
-            msg:`No se encontro un usuario con el id: ${idUsuario} en la base de datos`,
+            msg:('Falta uno o mas datos del usuario. Favor de completarlos'),
             cont:{
-                idUsuario
+                err
             }
         })
     }
-    const usuariofiltrado = arrJsnUsuarios.filter(usuario => usuario._id != idUsuario);
-    arrJsnUsuarios=usuariofiltrado;
-    
+    const usuarioRegistrado = bodyUsuario.save();
+
     return res.status(200).json({
         ok:true,
-        msg:'Se elimino el usuario de manera exitosa',
+        msg:('El usuario se registro correctamente'),
         cont:{
-            encontroUsuario
+            usuarioRegistrado
         }
     })
+} catch (error) {
+    return res.status(500).json(
+        {
+            ok:false,
+            msg: 'Error en el servidor',
+            cont:
+            {
+                error
+            }
+        })
+}
+
 })
 
+app.put('/', async(req,res)=> {
+
+    try {
+        const _idUsuario = req.query._idUsuario;
+
+        if (!_idUsuario || _idUsuario.length !=24)
+        {
+            return res.status(400).json(
+                {
+                    ok:false,
+                    msg: _idUsuario ? 'El id no es valido, se requiere un id de almenos 24 caracteres' : 'No se recibio un usuario',
+                    cont:
+                    {
+                        _idUsuario
+                    }
+                }) 
+        }
+
+        const encontroUsuario = await UsuarioModel.findOne({_id: _idUsuario});
+       
+        if (!encontroUsuario)
+        {
+            return res.status(400).json(
+                {
+                    ok:false,
+                    msg: 'No se encuentra registrado el usuario',
+                    cont:
+                    {
+                        _idUsuario
+                    }
+                }) 
+
+        }
+
+        const encontroNombreUsuario = await UsuarioModel.findOne({strNombreUsuario: req.body.strNombreUsuario, _id:{$ne: _idUsuario}},{strNombre:1, strNombreUsuario:1});
+
+        if (encontroNombreUsuario)
+        {
+            return res.status(400).json(
+                {
+                    ok:false,
+                    msg: 'El nombre de usuario ya se encuentra registrado',
+                    cont:
+                    {
+                        encontroNombreUsuario
+                    }
+                }) 
+
+        }
+        
+        const actualizarUsuario = await UsuarioModel.findOneAndUpdate({_id:_idUsuario}, 
+            { $set:{strNombre: req.body.strNombre, 
+                strApellido: req.body.strApellido, 
+                strDireccion: req.body.strDireccion, 
+                strNombreUsuario: req.body.strNombreUsuario}}, 
+            {new :true, upsert: true});
+
+        if (!actualizarUsuario)
+        {
+            return res.status(400).json(
+                {
+                    ok:false,
+                    msg: 'No se logro actualizar el usuario',
+                    cont:
+                    {
+                        ...req.body
+                    }
+                }) 
+
+        }
+
+        return res.status(200).json(
+            {
+                ok:true,
+                msg: 'El producto se actualizo de manera existosa',
+                cont:
+                {
+                    usuarioAnterior: encontroUsuario,
+                    usuarioActual: actualizarUsuario
+                }
+            })
 
 
+    } 
+    catch (error) {
+        return res.status(500).json(
+            {
+                ok:false,
+                msg: 'Error en el servidor',
+                cont:
+                {
+                    error
+                }
+            })
+    }
+})
+
+app.delete('/', async (req,res)=> {
+    try {
+    const _idUsuario = req.query._idUsuario
+    const blnEstado = req.body.blnEstado == "false" ? false : true
+
+    if(!_idUsuario || _idUsuario.length !=24 || !blnEstado) {
+        return res.status(400).json({
+            ok:false,
+            msg: _idUsuario ? 'No es un id valido' : 'No se registro un identificador de usuario',
+            cont: {
+                _idUsuario: _idUsuario
+            }
+        })
+    }
+
+    const modificarEstadoUsuario = await UsuarioModel.findOneAndUpdate({ _id: _idUsuario}, { $set: {blnEstado: blnEstado}}, {new: true})
+} catch(error) {
+    return res.status(500).json(
+        {
+            ok:false,
+            msg: 'Error en el servidor',
+            cont:
+            {
+                error
+            }
+        })
+}
+
+    /*
+   return res.status(200).json({
+       ok:true,
+       msg: 'Se recibieron los valores de manera exitosa',
+       cont: {
+           _idUsuario: _idUsuario,
+           blnEstado: blnEstado
+       }
+   })
+   */
+})
 
 module.exports = app;
