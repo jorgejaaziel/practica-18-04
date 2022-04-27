@@ -1,6 +1,10 @@
 const mongoose = require("mongoose");
 
 let schemaUsuario = mongoose.Schema({
+    blnEstado: {
+        type: Boolean,
+        default: true
+    },
     strNombre:
     {
         type: String,
@@ -23,12 +27,17 @@ let schemaUsuario = mongoose.Schema({
     },
     strContrasena: {
         type: String,
-        required:[true, 'No se recibio la contrasena, favor de ingresarla']
+        required:[true, 'No se recibio la contrasena. Favor de ingresarla']
     },
     strContrasena:
     {
         type: String,
         required:[true,'No se recibio la contrasena. Favor de ingresarlo']
+    },
+    strNombreUsuario:
+    {
+        type: String,
+        required:[true,'No se recibio el nombre de usuario. Favor de ingresarlo']
     }
 });
 
