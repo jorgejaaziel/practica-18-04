@@ -1,44 +1,34 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
-let schemaUsuario = mongoose.Schema({
+let SchemaUsuario = mongoose.Schema({
     blnEstado: {
         type: Boolean,
         default: true
     },
-    strNombre:
-    {
+    strNombre: {
         type: String,
-        required:[true,'No se recibio el Nombre. Favor de ingresarlo']
+        required: [true, 'No se recibio el strNombre, favor de ingresarlo']
     },
-    strApellido:
-    {
+    strApellido: {
         type: String,
-        required:[true,'No se recibio el apellido. Favor de ingresarlo']
+        required: [true, 'No se recibio el strDescripcion, favor de ingresarlo']
     },
-    strNombreUsuario:
-    {
+    strEmail: {
         type: String,
-        required:[true,'No se recibio el NombreUsuario. Favor de ingresarlo']
-    },
-    strEmail:
-    {
-        type: String,
-        required:[true,'No se recibio email. Favor de ingresarlo']
+        required: [true, 'No se recibio el strEmail, favor de ingresarlo']
     },
     strContrasena: {
         type: String,
-        required:[true, 'No se recibio la contrasena. Favor de ingresarla']
+        required: [true, 'No se recibio el strContrasena, favor de ingresarlo']
     },
-    strContrasena:
-    {
+    strDireccion: {
         type: String,
-        required:[true,'No se recibio la contrasena. Favor de ingresarlo']
+        required: [true, 'No se recibio el strDireccion, favor de ingresarlo']
     },
-    strNombreUsuario:
-    {
+    strNombreUsuario: {
         type: String,
-        required:[true,'No se recibio el nombre de usuario. Favor de ingresarlo']
+        required: [true, 'No se recibio el strNombreUsuario, favor de ingresarlo']
     }
-});
+})
 
-module.exports = mongoose.model('usuario',schemaUsuario);
+module.exports = mongoose.model('usuario', SchemaUsuario);

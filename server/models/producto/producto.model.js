@@ -1,22 +1,22 @@
 const mongoose = require('mongoose');
 
-let schemaProducto = mongoose.Schema({
+let SchemaProducto = mongoose.Schema({
     blnEstado: {
         type: Boolean,
-        default: true
+        default: true,
     },
     strNombre: {
         type: String,
-        requires:[true, 'No se recibio el strNombre favor de ingresarlo']
+        required: [true, 'No se recibio el strNombre favor de ingresarlo']
     },
     strDescripcion: {
         type: String,
-        required: [true, 'No se recibio el strDescripcion favor de ingrsarlo']
+        required: [true, 'No se recibio el strDescripcion favor de ingresarlo']
     },
     nmbPrecio: {
-        type:Number,
-        required: [true, 'No se recibio el nmbPrecio favor de ingrsarlo']
+        type: Number,
+        required: [true, 'No se recibio el nmbPrecio favor de ingresarlo']
     }
-});
+})
 
-module.exports = mongoose.model('producto', schemaProducto);
+module.exports = mongoose.model('producto', SchemaProducto);

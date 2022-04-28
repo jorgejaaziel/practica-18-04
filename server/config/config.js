@@ -8,4 +8,4 @@ if(process.env.NODE_ENV === 'dev'){
     urlDB = "mongodb://localhost:27017/InventarioHandCloud";
 }
 
-process.env.urlDB = urlDB;
+process.env.URLDB = urlDB;
