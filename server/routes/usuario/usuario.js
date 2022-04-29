@@ -2,11 +2,28 @@ const express = require('express');
 const app = express.Router();
 const UsuarioModel = require('../../models/usuario/usuario.model');
 const bcrypt = require('bcrypt');
-// const path = require('path');
-// const rutaDescarga = path.resolve(__dirname, '../../assets/index.html');
-app.get('/', async (req, res) => {
+const {verificarAcceso} = require('../../middlewares/permisos');
+
+
+app.get('/', verificarAcceso, async (req, res) => {
     const blnEstado = req.query.blnEstado == "false" ? false : true;
     const obtenerUsuarios = await UsuarioModel.find({ blnEstado: blnEstado }, {});
+
+    const obtenerusuariosAgregate = await UsuarioModel.aggregate(
+        [
+        {   
+            $match: { blnEstado: blnEstado} 
+        },
+        {
+                $lookup:{
+                from:"empresas",
+                localField:"idEmpresa",
+                foreignField:"_id",
+                as: "empresa"
+            }
+        },
+    ]);
+
     if (obtenerUsuarios.length < 1) {
         return res.status(400).json({
             ok: false,
@@ -25,7 +42,7 @@ app.get('/', async (req, res) => {
         }
     })
 })
-app.post('/', async (req, res) => {
+app.post('/', verificarAcceso,  async (req, res) => {
     // existe ? (lo que pasa si existe) : (no existe);
     const body = { ...req.body, strContrasena: req.body.strContrasena ? bcrypt.hashSync(req.body.strContrasena, 10) : undefined };
     const bodyUsuario = new UsuarioModel(body);
@@ -69,7 +86,7 @@ app.post('/', async (req, res) => {
     })
 })
 
-app.put('/', async (req, res) => {
+app.put('/', verificarAcceso, async (req, res) => {
 
     try {
         const _idUsuario = req.query._idUsuario;
@@ -122,7 +139,8 @@ app.put('/', async (req, res) => {
             $set: {
                 strNombre: req.body.strNombre, strApellido: req.body.strApellido,
                 strDireccion: req.body.strDireccion,
-                strNombreUsuario: req.body.strNombreUsuario
+                strNombreUsuario: req.body.strNombreUsuario,
+                idEmpresa: req.body.idEmpresa
             }
         }, { new: true, upsert: true });
 
@@ -166,7 +184,7 @@ app.put('/', async (req, res) => {
     }
 })
 
-app.delete('/', async (req, res) => {
+app.delete('/', verificarAcceso, async (req, res) => {
     try {
         const _idUsuario = req.query._idUsuario
         const blnEstado = req.query.blnEstado == "false" ? false : true

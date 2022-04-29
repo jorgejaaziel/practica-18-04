@@ -2,6 +2,7 @@ const express = require('express');
 const app = express.Router();
 const empresaModel = require('../../models/empresa/empresa.model');
 const EmpresaModel = require('../../models/empresa/empresa.model');
+const { verificarAcceso } = require('../../middlewares/permisos');
 
 app.get('/', async (req, res) => {
     try {

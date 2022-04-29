@@ -8,4 +8,8 @@ if(process.env.NODE_ENV === 'dev'){
     urlDB = "mongodb://localhost:27017/InventarioHandCloud";
 }
 
+process.env.SEED = process.env.SEED || 'Firma Secreta';
+
+process.env.CADUCIDAD_TOKEN = process.env.CADUCIDAD_TOKEN || '5m';
+
 process.env.URLDB = urlDB;

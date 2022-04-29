@@ -1,8 +1,11 @@
 const express = require('express');
 const app = express.Router();
 const ProductoModel = require('../../models/producto/producto.model');
+const bcrypt = require('bcrypt');
+const {verificarAcceso} = require('../../middlewares/permisos');
 
-app.get('/', async (req, res) => {
+
+app.get('/', verificarAcceso, async (req, res) => {
     try {
         const blnEstado = req.query.blnEstado == "false" ? false : true;
         const obtenerProductos = await ProductoModel.find({ blnEstado: blnEstado });
@@ -43,7 +46,7 @@ app.get('/', async (req, res) => {
         })
     }
 })
-app.post('/', async (req, res) => {
+app.post('/', verificarAcceso, async (req, res) => {
     try {
         const body = req.body;
         const productoBody = new ProductoModel(body);
@@ -87,7 +90,7 @@ app.post('/', async (req, res) => {
 
 
 })
-app.put('/', async (req, res) => {
+app.put('/', verificarAcceso, async (req, res) => {
     try {
         const _idProducto = req.query._idProducto;
         if (!_idProducto || _idProducto.length != 24) {
@@ -149,7 +152,7 @@ app.put('/', async (req, res) => {
     }
 
 })
-app.delete('/', async (req, res) => {
+app.delete('/', verificarAcceso, async (req, res) => {
     try {
         const _idProducto = req.query._idProducto;
         const blnEstado = req.query.blnEstado == "false" ? false : true
@@ -202,6 +205,7 @@ app.delete('/', async (req, res) => {
         })
     }
 })
+
 //La agregación en MongoDB sigue una estructura tipo "pipeline":
 // diferentes etapas, donde cada una toma la salida de la anterior.
 // Los elementos de la "tubería" se incluyen en un array y se ejecutarán por orden.
