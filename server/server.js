@@ -3,9 +3,11 @@ require('colors');
 const express = require('express');
 const mongoose = require('mongoose');
 const app = express();
-
-app.use(express.urlencoded({ extended: true }));
+const fileUpload = require('express-fileupload');
+app.use(fileUpload());
+app.use(express.urlencoded({extended: true}));
 app.use('/api', require('./routes/index'));
+
 
 // console.log(process.env.URLDB, 'URLDB')
 mongoose.connect(process.env.URLDB, (err, resp) => {

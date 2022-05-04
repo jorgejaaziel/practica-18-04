@@ -2,8 +2,11 @@ const express = require('express');
 const app = express.Router();
 const UsuarioModel = require('../../models/usuario/usuario.model');
 const bcrypt = require('bcrypt');
+const cargaArchivo = require('../../library/cargarArchivos');
+const { verificarAcceso } = require('../../middlewares/permisos');
+const RolModel = require('../../models/permisos/rol.model')
 
-app.get('/', async (req,res) => {
+app.get('/', verificarAcceso, async (req,res) => {
     try {
 
     const obtenerUsuarios = await UsuarioModel.find({},{strContrasena:0});
@@ -45,70 +48,81 @@ app.get('/', async (req,res) => {
     
 });
 
-app.post('/', async (req,res) =>
-{
+app.post('/', async (req, res) => {
+    // existe ? (lo que pasa si existe) : (no existe);
     try {
-    const body ={ ...req.body, strContrasena: req.body.strContrasena ? bcrypt.hashSync(req.body.strContrasena,10) : undefined };
-    const bodyUsuario = new UsuarioModel(body);
-
-    const obtenermail = await UsuarioModel.findOne({strEmail:body.strEmail});
-    const obtenerNombreUsuarios = await UsuarioModel.findOne({strNombreUsuario:body.strNombreUsuario});
-
-    if(obtenermail)
-    {
-        return res.status(400).json({
-            ok:false,
-            msg:('El email ya se encuentra registrado'),
-            cont:{
-                body
-            }
-        })
-    }
-
-    if(obtenerNombreUsuarios)
-    {
-        return res.status(400).json({
-            ok:false,
-            msg:('El nombre ya se encuentra registrado'),
-            cont:{
-                body
-            }
-        })
-    }
-
-    const err = bodyUsuario.validateSync();
-
-    if (err) 
-    {
-        return res.status(400).json({
-            ok:false,
-            msg:('Falta uno o mas datos del usuario. Favor de completarlos'),
-            cont:{
-                err
-            }
-        })
-    }
-    const usuarioRegistrado = bodyUsuario.save();
-
-    return res.status(200).json({
-        ok:true,
-        msg:('El usuario se registro correctamente'),
-        cont:{
-            usuarioRegistrado
+        const body = { ...req.body, strContrasena: req.body.strContrasena ? bcrypt.hashSync(req.body.strContrasena, 10) : undefined };
+        const bodyUsuario = new UsuarioModel(body);
+        const encontrarEmailUsuario = await UsuarioModel.findOne({ strEmail: body.strEmail });
+        const encontrarNombreUsuario = await UsuarioModel.findOne({ strNombreUsuario: body.strNombreUsuario })
+        if (encontrarEmailUsuario) {
+            return res.status(400).json({
+                ok: false,
+                msg: 'El correo ya se encuentra registrado',
+                cont: {
+                    body
+                }
+            })
         }
-    })
-} catch (error) {
-    return res.status(500).json(
-        {
-            ok:false,
-            msg: 'Error en el servidor',
-            cont:
-            {
-                error
+        if (encontrarNombreUsuario) {
+            return res.status(400).json({
+                ok: false,
+                msg: 'El nombre de usuario ya se encuentra registrado',
+                cont: {
+                    body
+                }
+            })
+        }
+        const err = bodyUsuario.validateSync();
+        if (err) {
+            return res.status(400).json({
+                ok: false,
+                msg: 'Uno o mas campos no se registrarón favor de ingresarlos',
+                cont: {
+                    err
+                }
+            })
+        }
+        if (req.files) {
+            if (!req.files.strImagen) {
+                return res.status(400).json({
+                    ok: false,
+                    msg: 'No se recibio un archivo strImagen, favor de inregsarlo',
+                    cont: {}
+                })
+            }
+            bodyUsuario.strImagen = await cargaArchivo.subirArchivo(req.files.strImagen, 'usuario', ['image/png', 'image/jpg', 'image/jpeg'])
+
+        }
+
+
+        if(!req.body._idObjRol){
+            const encontroRolDefault = await RolModel.findOne({blnRolDefault:true})
+            UsuarioBody._idObjRol = encontroRolDefault._id;
+        }
+    
+
+
+        const usuarioRegistrado = await bodyUsuario.save();
+        return res.status(200).json({
+            ok: true,
+            msg: 'Se registro el usuario de manera exitosa',
+            cont: {
+                usuarioRegistrado
             }
         })
-}
-
+    } catch (error) {
+        const err = Error(error);
+        return res.status(500).json(
+            {
+                ok: false,
+                msg: 'Error en el servidor',
+                cont:
+                {
+                    err: err.message ? err.message : err.name ? err.name : err
+                }
+            })
+    }
 })
 
 app.put('/', async(req,res)=> {

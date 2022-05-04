@@ -11,11 +11,11 @@ let schemaApi = new mongoose.Schema({
     },
     strMetodo: {
         type: String,
-        requerido: [true, 'No se recibio strMetodo favor de ingresarlo']
+        required: [true, 'No se recibio strMetodo favor de ingresarlo']
     },
     strDescripcion: {
         type: String, 
-        requerido: [true, 'No se recibio strDescripcion favor de ingresarlo']
+        required: [true, 'No se recibio strDescripcion favor de ingresarlo']
     },
     blnEsApi: {
         type: Boolean,

@@ -32,7 +32,15 @@ let SchemaUsuario = mongoose.Schema({
     idEmpresa: {
     type: mongoose.Types.ObjectId,
     required: [true, 'No se recibio el idEmpresa, favor de ingresarlo']
-}
+    },
+    strImagen:{
+    type: String,
+    default:'default.jpg'
+    },
+    _idObjRol:{
+    type: mongoose.Types.ObjectId
+    }
+
 })
 
 module.exports = mongoose.model('usuario', SchemaUsuario);
