@@ -3,26 +3,63 @@ const app = express.Router();
 const UsuarioModel = require('../../models/usuario/usuario.model');
 const bcrypt = require('bcrypt');
 const {verificarAcceso} = require('../../middlewares/permisos');
-
+const RolModel = require('../../models/permisos/rol.model')
+const EmpresaModel = require('../../models/empresa/empresa.model')
 
 app.get('/', verificarAcceso, async (req, res) => {
     const blnEstado = req.query.blnEstado == "false" ? false : true;
     const obtenerUsuarios = await UsuarioModel.find({ blnEstado: blnEstado }, {});
 
     const obtenerusuariosAgregate = await UsuarioModel.aggregate(
-        [
-        {   
-            $match: { blnEstado: blnEstado} 
+        [{
+            $match:{blnEstado:blnEstado}
         },
+       
         {
+            $lookup:{
+            from: empresaModel.collection.name,
+            localField: '_idEmpresa',
+            foreignField: '_id',
+             as: 'Empresa'
+            },
+        },    
+            {
                 $lookup:{
-                from:"empresas",
-                localField:"idEmpresa",
-                foreignField:"_id",
-                as: "empresa"
+                    from: RolModel.collection.name,
+                    let: {idObjRol:'$_idObjRol'},
+                    pipeline:[
+                        {$match:{$expr: {$eq: ['$_id','$$idObjRol']}}},
+                        {
+                            $lookup:{
+                                from: permisosModel.collection.name,
+                                let: {idObjApi:'$arrObjIdApis'},
+                                pipeline:[
+                                    {$match:{$expr:{$in:['$_id','$$idObjApi']}}},
+                                ],
+                                as:'apis'
+                            }
+                        },
+                        {$project:{strNombre:1,strDescripcion:1,blnRolDefault:1,blnEstado:1,apis:1}}
+                    ],
+                    as: 'roles'
+                }
+            },
+            {
+                $project:{
+                    strNombre:1,
+                    strApellido:1,
+                    strEmail:1,
+                    strDireccion:'$strDireccion',
+                    Empresa:{
+                        $arrayElemAt:['$Empresa',0]
+                    },
+                    roles:{
+                        $arrayElemAt:['$roles',0]
+                    },
+                }
             }
-        },
-    ]);
+    ])
+   
 
     if (obtenerUsuarios.length < 1) {
         return res.status(400).json({
