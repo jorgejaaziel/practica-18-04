@@ -3,9 +3,9 @@ process.env.PORT = process.env.PORT || 3000;
 let urlDB;
 
 if(process.env.NODE_ENV === 'dev'){
-    urlDB = "mongodb://localhost:27017/InventarioHandCloud";
+    urlDB = "mongodb+srv://jjml:12345@cluster0.b0xxk.mongodb.net/handCloudBootcamp?retryWrites=true&w=majority";
 } else{
-    urlDB = "mongodb://localhost:27017/InventarioHandCloud";
+    urlDB = "mongodb+srv://jjml:12345@cluster0.b0xxk.mongodb.net/handCloudBootcamp?retryWrites=true&w=majority";
 }
 
 process.env.SEED = process.env.SEED || 'Firma Secreta';
